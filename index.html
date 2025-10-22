@@ -3,48 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editable Table with Features</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <title>Editable Table with Private Google Sheets</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      padding: 20px;
       background-color: #f4f4f4;
     }
+
     .container {
-      max-width: 100%;
-      width: 90%;
-      margin: 20px;
+      max-width: 800px;
+      margin: auto;
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      overflow-x: auto;
       padding: 20px;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
     }
+
     th {
       background-color: #007bff;
       color: white;
       cursor: pointer;
     }
+
     td[contenteditable="true"] {
       background-color: #f9f9f9;
     }
-    .button {
+
+    button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 16px;
@@ -54,178 +53,102 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    .button:hover {
+
+    button:hover {
       background-color: #218838;
-    }
-    .search-box {
-      margin-bottom: 10px;
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    @media (max-width: 768px) {
-      th, td {
-        font-size: 14px;
-        padding: 6px;
-      }
-      .button {
-        font-size: 14px;
-        padding: 8px 16px;
-      }
     }
   </style>
 </head>
 <body>
 
-<div class="container" id="login-container">
-  <h2>Login</h2>
-  <form id="login-form">
-    <label for="username">Username:</label>
-    <input type="text" id="username" placeholder="Enter username" required>
-    <br>
-    <label for="password">Password:</label>
-    <input type="password" id="password" placeholder="Enter password" required>
-    <br>
-    <button type="submit" class="button">Login</button>
-  </form>
-</div>
-
-<div class="container" id="app-container" style="display: none;">
-  <h2>Editable Table with Features</h2>
-  
-  <!-- Search Box -->
-  <input type="text" id="search-box" class="search-box" placeholder="Search..." oninput="searchTable()">
-  
-  <!-- Editable Table -->
+<div class="container">
+  <h2>Editable Table with Private Google Sheets</h2>
   <table id="data-table">
     <thead>
       <tr id="table-headers"></tr>
     </thead>
-    <tbody>
-      <!-- Rows will be dynamically inserted here -->
-    </tbody>
+    <tbody></tbody>
   </table>
-
-  <!-- Buttons -->
-  <button class="button" onclick="downloadExcel()">Download Excel</button>
-  <button class="button" onclick="saveChanges()">Save Changes</button>
+  <button onclick="saveChanges()">Save Changes</button>
 </div>
 
 <script>
-  // GitHub raw URL to your Excel file
-  const EXCEL_FILE_URL = "https://raw.githubusercontent.com/ahbutt82/invite-list/main/updated_table.xlsx";
+  // Your web app URL
+  const API_URL = "https://script.google.com/macros/s/AKfycbw2tfBVl2iT7g-GBsFsXLYEuFS4HhfyYSVpAGrh8c5ljquwK534_rVB4SF5L5cT8Wu6/exec";
 
-  // Variables
   let tableData = [];
-  let originalTableData = [];
 
-  // Login functionality
-  const loginForm = document.getElementById("login-form");
-  const loginContainer = document.getElementById("login-container");
-  const appContainer = document.getElementById("app-container");
-
-  loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
-
-    if (username === "asim" && password === "aitchison") {
-      loginContainer.style.display = "none";
-      appContainer.style.display = "block";
-      fetchAndLoadExcel(); // Load the Excel file after login
-    } else {
-      alert("Incorrect username or password!");
-    }
-  });
-
-  // Fetch and load Excel file
-  async function fetchAndLoadExcel() {
+  // Fetch data from Google Sheets
+  async function fetchData() {
     try {
-      const response = await fetch(EXCEL_FILE_URL);
-      if (!response.ok) throw new Error("Failed to fetch the Excel file.");
-
-      const arrayBuffer = await response.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-
-      tableData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      originalTableData = JSON.parse(JSON.stringify(tableData)); // Keep a copy of the original data
-
-      populateTable(tableData);
+      const response = await fetch(API_URL); // GET request to your web app URL
+      tableData = await response.json(); // Parse JSON response
+      populateTable(tableData); // Populate the table with data
     } catch (error) {
-      console.error("Error loading Excel file:", error);
+      console.error("Error fetching data:", error);
+      alert("Failed to fetch data from Google Sheets.");
     }
   }
 
-  // Populate the table
+  // Populate the HTML table with data
   function populateTable(data) {
+    const headers = data[0]; // First row is the header
+    const rows = data.slice(1); // Remaining rows are the data
+
     const tableHeaders = document.getElementById("table-headers");
     const tableBody = document.querySelector("#data-table tbody");
     tableHeaders.innerHTML = "";
     tableBody.innerHTML = "";
 
-    // Use the first row of data as headers
-    const headers = data.shift();
-    headers.forEach((header, index) => {
+    // Add table headers
+    headers.forEach((header) => {
       const th = document.createElement("th");
-      th.textContent = header || `Column ${index + 1}`;
-      th.onclick = () => sortTable(index);
+      th.textContent = header;
       tableHeaders.appendChild(th);
     });
 
-    // Populate rows
-    data.forEach((row) => {
+    // Add table rows
+    rows.forEach((row) => {
       const tr = document.createElement("tr");
       row.forEach((cell) => {
         const td = document.createElement("td");
-        td.contentEditable = "true";
-        td.textContent = cell || "";
+        td.contentEditable = "true"; // Make cells editable
+        td.textContent = cell || ""; // Populate cell content
         tr.appendChild(td);
       });
       tableBody.appendChild(tr);
     });
   }
 
-  // Search functionality
-  function searchTable() {
-    const searchValue = document.getElementById("search-box").value.toLowerCase();
-    const rows = document.querySelectorAll("#data-table tbody tr");
+  // Save changes to Google Sheets
+  async function saveChanges() {
+    const rows = Array.from(document.querySelectorAll("#data-table tbody tr"));
+    const updatedData = rows.map((row) =>
+      Array.from(row.cells).map((cell) => cell.textContent)
+    );
 
-    rows.forEach((row) => {
-      const cells = Array.from(row.cells);
-      const match = cells.some((cell) =>
-        cell.textContent.toLowerCase().includes(searchValue)
-      );
-      row.style.display = match ? "" : "none";
-    });
+    updatedData.unshift(tableData[0]); // Add headers back to the data
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST", // POST request to your web app URL
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData), // Send updated data as JSON
+      });
+
+      if (response.ok) {
+        alert("Changes saved successfully!");
+      } else {
+        throw new Error("Failed to save changes.");
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("Failed to save changes.");
+    }
   }
 
-  // Sorting functionality
-  function sortTable(columnIndex) {
-    tableData.sort((a, b) => {
-      const cellA = a[columnIndex] || "";
-      const cellB = b[columnIndex] || "";
-      return String(cellA).localeCompare(String(cellB));
-    });
-    populateTable([originalTableData[0], ...tableData]);
-  }
-
-  // Save changes
-  function saveChanges() {
-    originalTableData = [originalTableData[0], ...tableData]; // Update original data
-    alert("Changes have been saved!");
-  }
-
-  // Download updated Excel file
-  function downloadExcel() {
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet([originalTableData[0], ...tableData]);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    XLSX.writeFile(workbook, "updated_table.xlsx");
-  }
+  // Load data when the page loads
+  fetchData();
 </script>
 
 </body>
