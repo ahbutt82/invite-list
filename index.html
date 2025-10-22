@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editable Table with Excel Support</title>
+  <title>Editable Table with Preloaded Excel</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
@@ -17,41 +17,12 @@
       background-color: #f4f4f4;
     }
     .container {
-      display: none;
       max-width: 800px;
       margin: auto;
       padding: 20px;
       background: #fff;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .login-form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      width: 300px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    .login-form input {
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .login-form button {
-      padding: 10px;
-      font-size: 16px;
-      border: none;
-      background-color: #007bff;
-      color: #fff;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .login-form button:hover {
-      background-color: #0056b3;
     }
     table {
       width: 100%;
@@ -70,15 +41,6 @@
     td[contenteditable="true"] {
       background-color: #f9f9f9;
     }
-    .upload-section {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .upload-section input[type="file"] {
-      padding: 10px;
-    }
     .download-button {
       margin-top: 20px;
       padding: 10px 20px;
@@ -96,119 +58,5 @@
 </head>
 <body>
 
-  <!-- Login Form -->
-  <div class="login-form" id="login-form">
-    <h3>Login</h3>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
-
-  <!-- Main Content -->
-  <div class="container" id="main-content">
-    <h2>Editable Table with Excel Support</h2>
-    
-    <!-- Upload Section -->
-    <div class="upload-section">
-      <label for="excel-file">Upload an Excel file (.xlsx):</label>
-      <input type="file" id="excel-file" accept=".xlsx" onchange="handleFileUpload(event)">
-    </div>
-
-    <!-- Download Button -->
-    <button class="download-button" onclick="downloadExcel()">Download Updated Excel</button>
-
-    <!-- Editable Table -->
-    <table id="data-table">
-      <thead>
-        <tr>
-          <th>Column 1</th>
-          <th>Column 2</th>
-          <th>Column 3</th>
-          <th>Column 4</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be dynamically inserted here -->
-      </tbody>
-    </table>
-  </div>
-
-  <script>
-    // Hardcoded login credentials
-    const CREDENTIALS = { username: "asim", password: "aitchison" };
-
-    // Login function
-    function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
-        document.getElementById("login-form").style.display = "none";
-        document.getElementById("main-content").style.display = "block";
-      } else {
-        alert("Invalid username or password!");
-      }
-    }
-
-    let tableData = []; // To store the table data
-
-    // Handle Excel file upload
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        tableData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-        populateTable(tableData);
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    // Populate table with Excel data
-    function populateTable(data) {
-      const tableBody = document.querySelector("#data-table tbody");
-      tableBody.innerHTML = ""; // Clear the table
-
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-
-        // Ensure the row has at least 4 columns
-        for (let i = 0; i < 4; i++) {
-          const td = document.createElement("td");
-          td.contentEditable = "true"; // Make cells editable
-          td.textContent = row[i] || ""; // Use empty string for missing cells
-          tr.appendChild(td);
-        }
-
-        tableBody.appendChild(tr);
-      });
-    }
-
-    // Download updated Excel
-    function downloadExcel() {
-      const tableBody = document.querySelector("#data-table tbody");
-      const rows = Array.from(tableBody.rows);
-
-      // Extract data from the table
-      tableData = rows.map(row => {
-        return Array.from(row.cells).map(cell => cell.textContent);
-      });
-
-      // Create a workbook and add the updated data
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet(tableData);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-
-      // Trigger download
-      XLSX.writeFile(workbook, "updated_table.xlsx");
-    }
-  </script>
-
-</body>
-</html>
+  <div class="container">
+    <h2>Editable Table with Preloaded
